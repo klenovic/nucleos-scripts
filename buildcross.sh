@@ -36,7 +36,7 @@ gcc_core_patch=
 gcc_core_target=$target
 gcc_core_builddir=
 gcc_core_prefix=
-gcc_core_prefix_link=$workdir/gcc-core-install
+gcc_core_prefix_link=$workdir/gcc-core
 
 # core for build the full cross compiler
 glibc_srcdir=
