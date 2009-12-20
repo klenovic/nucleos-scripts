@@ -28,7 +28,7 @@ binutils_patch=
 # target string
 binutils_target=$target
 # building directory
-bintuils_builddir=
+binutils_builddir=
 
 # core for build the full cross compiler
 gcc_core_srcdir=
