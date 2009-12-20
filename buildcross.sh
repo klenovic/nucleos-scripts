@@ -13,9 +13,9 @@
 ##############################################################################
 
 cpu=i686
-manufacturer=unknown
+manufacturer=pc
 kernel=nucleos
-os=gnu
+os=newlib
 
 workdir=`pwd`
 prefix=$workdir/crosstool
