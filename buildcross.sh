@@ -23,8 +23,6 @@ target=${cpu}-${manufacturer}-${kernel}-${os}
 
 # source directory
 binutils_srcdir=
-# patch
-binutils_patch=
 # target string
 binutils_target=$target
 # building directory
@@ -32,7 +30,6 @@ binutils_builddir=
 
 # core for build the full cross compiler
 gcc_core_srcdir=
-gcc_core_patch=
 gcc_core_target=$target
 gcc_core_builddir=
 gcc_core_prefix=
@@ -40,31 +37,28 @@ gcc_core_prefix_link=$workdir/gcc-core
 
 # core for build the full cross compiler
 glibc_srcdir=
-glibc_patch=
 glibc_target=
 glibc_host=$target
 glibc_builddir=
 
 # full cross compiler
 gcc_srcdir=
-gcc_patch=
 gcc_target=$target
 gcc_builddir=
 
 # newlib
 newlib_srcdir=
-newlib_patch=
 newlib_target=$target
 newlib_builddir=
 
 usage()
 {
-	echo "Usage: `basename $0` [-h] [-b binutils[:patch]] [-c core_gcc[:patch]] [-g full_gcc[:patch]] [-n newlib[:patch]] [-p cross]"
-	echo "[-b binutils package:patch]: path to binutils directory and patch if any"
-	echo "[-c core gcc package:patch]: path to gcc core directory and patch if any"
-	echo "[-g full gcc package:patch]: path to gcc directory and patch if any"
-	echo "[-l glibc:patch]: path to glibc directory and patch if any"
-	echo "[-n newlib package:patch]: path to newlib directory and patch if any"
+	echo "Usage: `basename $0` [-h] [-b binutils] [-c core_gcc] [-g full_gcc] [-n newlib] [-p cross]"
+	echo "[-b binutils package]: path to binutils directory"
+	echo "[-c core gcc package]: path to gcc core directory"
+	echo "[-g full gcc package]: path to gcc directory"
+	echo "[-l glibc]: path to glibc directory"
+	echo "[-n newlib package]: path to newlib directory"
 	echo "[-p core_cross:cross]: installation prefix for core cross and full cross toolset (current directory is default)"
 	echo "[-h]: this help"
 }
@@ -157,17 +151,6 @@ build_binutils()
 		exit 1
 	fi
 
-	# whether to patch
-	if [[ $binutils_patch ]]; then
-		echo "Patch binutils ..."
-		patch -d $binutils_srcdir -p1 < $binutils_patch
-
-		if [[ $? != 0 ]]; then
-			echo "Can't apply patches!"
-			exit 1
-		fi
-	fi
-
 	cd $binutils_builddir
 	$binutils_srcdir/configure --target=$binutils_target --prefix=$prefix --disable-nls $binutils_sysroot_arg
 
@@ -194,17 +177,6 @@ build_gcc_core()
 	if [[ $? != 0 ]]; then
 		echo "Can't create build directory!"
 		exit 1
-	fi
-
-	# patch gcc if neccessary
-	if [[ $gcc_core_patch ]]; then
-		echo "Patch $gcc_core_name ..."
-		patch -d $gcc_core_srcdir -p1 < $gcc_core_patch
-
-		if [[ $? != 0 ]]; then
-			echo "Can't apply patches!"
-			exit 1
-		fi
 	fi
 
 	# Copy headers to install area of bootstrap gcc, so it can build libgcc2
@@ -296,17 +268,6 @@ build_glibc()
 		exit 1
 	fi
 
-	# patch has to be common for core and full
-	if [[ $glibc_patch ]]; then
-		echo "Patch $glibc_name ..."
-		patch -d $glibc_srcdir -p1 < $glibc_patch
-
-		if [[ $? != 0 ]]; then
-			echo "Can't apply patches!"
-			exit 1
-		fi
-	fi
-
 	# rebuild `configure' from configure.in
 	echo "--- run autoconf in $glibc_srcdir/sysdeps/unix/sysv/nucleos"
 	cd $glibc_srcdir/sysdeps/unix/sysv/nucleos
@@ -352,16 +313,6 @@ build_newlib()
 		exit 1
 	fi
 
-	if [[ $newlib_patch ]]; then
-		echo "Patch $newlib_name ..."
-		patch -d $newlib_srcdir -p1 < $newlib_patch
-
-		if [[ $? != 0 ]]; then
-			echo "Can't apply patches!"
-			exit 1
-		fi
-	fi
-
 	echo "Configure $newlib_name package ..."
 	cd $newlib_builddir
 	$newlib_srcdir/configure --target=$newlib_target --prefix=$prefix
@@ -390,17 +341,6 @@ build_gcc_full()
 	if [[ $? != 0 ]]; then
 		echo "Can't create build directory!"
 		exit 1
-	fi
-
-	if [[ $gcc_patch ]]; then
-		# patch gcc/g++
-		echo "Patch $gcc_name ..."
-		patch -d $gcc_srcdir -p1 < $gcc_patch
-
-		if [[ $? != 0 ]]; then
-			echo "Can't apply patches!"
-			exit 1
-		fi
 	fi
 
 #
@@ -436,9 +376,8 @@ build_gcc_full()
 while getopts "b:c:g:l:n:hp:" OPT "$@"
 do
 	case "$OPT" in
-	b) # binutils package + patches
+	b) # binutils package
 		binutils_srcdir=`parse_string $OPTARG 1`
-		binutils_patch=`parse_string $OPTARG 2`
 
 		if [ -z  $binutils_srcdir ]; then
 			echo "Empty argument (missing binutils source)!"
@@ -453,9 +392,8 @@ do
 		binutils_builddir=$workdir/${binutils_name}-build
 		;;
 
-	c) # gcc core + patches
+	c) # gcc cores
 		gcc_core_srcdir=`parse_string $OPTARG 1`
-		gcc_core_patch=`parse_string $OPTARG 2`
 
 		if [ -z  $gcc_core_srcdir ]; then
 			echo "Empty argument (missing gcc core source)!"
@@ -471,9 +409,8 @@ do
 		gcc_core_prefix=$workdir/${gcc_core_name}-core-install
 		;;
 
-	g) # gcc + patches
+	g) # gcc
 		gcc_srcdir=`parse_string $OPTARG 1`
-		gcc_patch=`parse_string $OPTARG 2`
 
 		if [ -z  $gcc_srcdir ]; then
 			echo "Empty argument (missing gcc source)!"
@@ -487,9 +424,8 @@ do
 		gcc_builddir=$workdir/${gcc_name}-build
 		;;
 
-	l) # glibc + patches
+	l) # glibc
 		glibc_srcdir=`parse_string $OPTARG 1`
-		glibc_patch=`parse_string $OPTARG 2`
 
 		if [ -z  $glibc_srcdir ]; then
 			echo "Empty argument (missing glibc source)!"
@@ -504,9 +440,8 @@ do
 		glibc_builddir=$workdir/${glibc_name}-build
 		;;
 
-	n) # newlib + patches
+	n) # newlib
 		newlib_srcdir=`parse_string $OPTARG 1`
-		newlib_patch=`parse_string $OPTARG 2`
 
 		if [ -z  $newlib_srcdir ]; then
 			echo "Empty argument (missing newlib source)!"
