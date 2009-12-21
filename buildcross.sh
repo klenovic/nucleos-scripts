@@ -17,12 +17,16 @@ manufacturer=pc
 kernel=nucleos
 os=newlib
 
+build=i686-pc-linux-gnu
+
 workdir=`pwd`
 prefix=$workdir/crosstool
 target=${cpu}-${manufacturer}-${kernel}-${os}
 
 # source directory
 binutils_srcdir=
+# build
+binutils_build=$build
 # target string
 binutils_target=$target
 # building directory
@@ -30,6 +34,7 @@ binutils_builddir=
 
 # core for build the full cross compiler
 gcc_core_srcdir=
+gcc_core_build=$build
 gcc_core_target=$target
 gcc_core_builddir=
 gcc_core_prefix=
@@ -38,16 +43,19 @@ gcc_core_prefix_link=$workdir/gcc-core
 # core for build the full cross compiler
 glibc_srcdir=
 glibc_target=
+glibc_build=$build
 glibc_host=$target
 glibc_builddir=
 
 # full cross compiler
 gcc_srcdir=
+gcc_build=$build
 gcc_target=$target
 gcc_builddir=
 
 # newlib
 newlib_srcdir=
+newlib_build=$build
 newlib_target=$target
 newlib_builddir=
 
@@ -152,7 +160,11 @@ build_binutils()
 	fi
 
 	cd $binutils_builddir
-	$binutils_srcdir/configure --target=$binutils_target --prefix=$prefix --disable-nls $binutils_sysroot_arg
+	$binutils_srcdir/configure --build=$binutils_build \
+				   --target=$binutils_target \
+				   --prefix=$prefix \
+				   --disable-nls \
+				   $binutils_sysroot_arg
 
 	# build it
 	make all
@@ -188,7 +200,9 @@ build_gcc_core()
 	# Use --with-local-prefix so older gccs don't look in /usr/local (http://gcc.gnu.org/PR10532)
 	# Use funky prefix so it doesn't contaminate real prefix, in case gcc_srcdir != gcc_core_srcdir
 
-	$gcc_core_srcdir/configure --target=$gcc_core_target --prefix=$gcc_core_prefix \
+	$gcc_core_srcdir/configure --build=$bgcc_core_build \
+				   --target=$gcc_core_target \
+				   --prefix=$gcc_core_prefix \
 				   --with-local-prefix=${sysroot} \
 				   --disable-multilib \
 				   --with-newlib \
@@ -315,7 +329,15 @@ build_newlib()
 
 	echo "Configure $newlib_name package ..."
 	cd $newlib_builddir
-	$newlib_srcdir/configure --target=$newlib_target --prefix=$prefix
+
+	CC_FOR_TARGET=$gcc_core_prefix_link/$gcc_core_target \
+	AS_FOR_TARGET=$prefix/bin/$binutils_target \
+	LD_FOR_TARGET=$prefix/bin/$binutils_target \
+	AR_FOR_TARGET=$prefix/bin/$binutils_target \
+	RANLIB_FOR_TARGET=$prefix/bin/$binutils_target \
+	$newlib_srcdir/configure --build=$newlib_build \
+				 --target=$newlib_target \
+				 --prefix=$prefix
 
 	# build it
 	echo "Building $newlib_name ..."
@@ -354,13 +376,15 @@ build_gcc_full()
 	echo "Configure $gcc_name package ..."
 	cd $gcc_builddir
 
-	$gcc_srcdir/configure --target=$gcc_target --prefix=$prefix \
-			   $gcc_sysroot_arg \
-			   --enable-languages=c \
-			   --with-sysroot=$prefix/$gcc_target \
-			   --disable-shared \
-			   --disable-nls \
-			   --with-newlib
+	$gcc_srcdir/configure --build=$gcc_build \
+			      --target=$gcc_target \
+			      --prefix=$prefix \
+			      $gcc_sysroot_arg \
+			      --enable-languages=c \
+			      --with-sysroot=$prefix/$gcc_target \
+			      --disable-shared \
+			      --disable-nls \
+			      --with-newlib
 
 	# build it
 	echo "Building gcc ..."
