@@ -362,21 +362,6 @@ build_newlib()
 		fi
 	fi
 
-	echo "Run autoreconf in $newlib_srcdir/newlib/libc"
-	cd $newlib_srcdir/newlib/
-	autoreconf --no-recursive
-	cd $workdir
-
-	echo "Run autoconf in $newlib_srcdir/newlib/libc/sys"
-	cd $newlib_srcdir/newlib/libc/sys
-	autoconf
-	cd $workdir
-
-	echo "Run autoreconf in $newlib_srcdir/newlib/libc/sys/nucleos"
-	cd $newlib_srcdir/newlib/libc/sys/nucleos
-	autoreconf
-	cd $workdir
-
 	echo "Configure $newlib_name package ..."
 	cd $newlib_builddir
 	$newlib_srcdir/configure --target=$newlib_target --prefix=$prefix
