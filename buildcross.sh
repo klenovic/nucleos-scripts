@@ -166,7 +166,7 @@ build_binutils()
 				   --disable-nls \
 				   $binutils_sysroot_arg
 
-	# build it
+	# build
 	make all
 	make install
 
@@ -214,7 +214,7 @@ build_gcc_core()
 				   --enable-languages=c \
 				   --disable-shared
 
-	# build the core c
+	# build
 	make all-gcc
 	make install-gcc
 
@@ -339,7 +339,7 @@ build_newlib()
 				 --target=$newlib_target \
 				 --prefix=$prefix
 
-	# build it
+	# build
 	echo "Building $newlib_name ..."
 	make
 	make install
@@ -386,7 +386,7 @@ build_gcc_full()
 			      --disable-nls \
 			      --with-newlib
 
-	# build it
+	# build
 	echo "Building gcc ..."
 	make all
 	make install
