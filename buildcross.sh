@@ -330,11 +330,11 @@ build_newlib()
 	echo "Configure $newlib_name package ..."
 	cd $newlib_builddir
 
-	CC_FOR_TARGET=$gcc_core_prefix_link/$gcc_core_target \
-	AS_FOR_TARGET=$prefix/bin/$binutils_target \
-	LD_FOR_TARGET=$prefix/bin/$binutils_target \
-	AR_FOR_TARGET=$prefix/bin/$binutils_target \
-	RANLIB_FOR_TARGET=$prefix/bin/$binutils_target \
+	CC_FOR_TARGET=$gcc_core_prefix_link/bin/$gcc_core_target-gcc \
+	AS_FOR_TARGET=$prefix/bin/$binutils_target-as \
+	LD_FOR_TARGET=$prefix/bin/$binutils_target-ld \
+	AR_FOR_TARGET=$prefix/bin/$binutils_target-ar \
+	RANLIB_FOR_TARGET=$prefix/bin/$binutils_target-ranlib \
 	$newlib_srcdir/configure --build=$newlib_build \
 				 --target=$newlib_target \
 				 --prefix=$prefix
@@ -539,6 +539,7 @@ mkdir -p ${header_dir}
 # install system headers from kernel directoru
 install_system_headers x${KERNELDIR} x${header_dir}
 
+
 ### Build binutils
 if [ -n "$binutils_builddir" ]; then
 	build_binutils
@@ -559,12 +560,12 @@ if [ -n "$glibc_builddir" ]; then
 	build_glibc
 fi
 
-exit 0
-
 ### Build a newlib
 if [ -n "$newlib_builddir" ]; then
 	build_newlib
 fi
+
+exit 0
 
 ### Build full cross compiler
 if [ -n "$gcc_builddir" ]; then
