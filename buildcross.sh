@@ -337,7 +337,8 @@ build_newlib()
 	RANLIB_FOR_TARGET=$prefix/bin/$binutils_target-ranlib \
 	$newlib_srcdir/configure --build=$newlib_build \
 				 --target=$newlib_target \
-				 --prefix=$prefix
+				 --prefix=$gcc_core_prefix_link \
+				 --disable-shared
 
 	# build
 	echo "Building $newlib_name ..."
@@ -376,6 +377,11 @@ build_gcc_full()
 	echo "Configure $gcc_name package ..."
 	cd $gcc_builddir
 
+	CC_FOR_TARGET=$gcc_core_prefix_link/bin/$gcc_core_target-gcc \
+	AS_FOR_TARGET=$prefix/bin/$binutils_target-as \
+	LD_FOR_TARGET=$prefix/bin/$binutils_target-ld \
+	AR_FOR_TARGET=$prefix/bin/$binutils_target-ar \
+	RANLIB_FOR_TARGET=$prefix/bin/$binutils_target-ranlib \
 	$gcc_srcdir/configure --build=$gcc_build \
 			      --target=$gcc_target \
 			      --prefix=$prefix \
@@ -536,9 +542,8 @@ mkdir -p $sysroot/usr/lib
 
 mkdir -p ${header_dir}
 
-# install system headers from kernel directoru
+# install system headers from kernel directory
 install_system_headers x${KERNELDIR} x${header_dir}
-
 
 ### Build binutils
 if [ -n "$binutils_builddir" ]; then
