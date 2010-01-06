@@ -119,7 +119,6 @@ install_system_headers()
 
 	kernel_dir=`abspath $kernel_dir`
 
-
 	if [[ "$2" == "x" ]]; then
 		echo "Missing destination path for system headers!"
 		exit 1
@@ -164,6 +163,8 @@ build_binutils()
 				   --target=$binutils_target \
 				   --prefix=$prefix \
 				   --disable-nls \
+				   --with-gnu-as \
+				   --with-gnu-ld \
 				   $binutils_sysroot_arg
 
 	# build
@@ -191,120 +192,30 @@ build_gcc_core()
 		exit 1
 	fi
 
-	# Copy headers to install area of bootstrap gcc, so it can build libgcc2
-	mkdir -p $gcc_core_prefix/$target/include
-	cp -r $header_dir/* $gcc_core_prefix/$target/include
-
 	cd $gcc_core_builddir
 
 	# Use --with-local-prefix so older gccs don't look in /usr/local (http://gcc.gnu.org/PR10532)
 	# Use funky prefix so it doesn't contaminate real prefix, in case gcc_srcdir != gcc_core_srcdir
 
-	$gcc_core_srcdir/configure --build=$bgcc_core_build \
+	$gcc_core_srcdir/configure --build=$gcc_core_build \
 				   --target=$gcc_core_target \
-				   --prefix=$gcc_core_prefix \
-				   --with-local-prefix=${sysroot} \
+				   --prefix=$prefix \
+				   --with-local-prefix=${prefix}/${target} \
 				   --disable-multilib \
+				   --without-headers \
 				   --with-newlib \
-				   ${gcc_core_sysroot_arg} \
 				   --disable-nls \
 				   --enable-threads=no \
 				   --enable-symvers=gnu \
-				   --enable-__cxa_atexit \
 				   --enable-languages=c \
-				   --disable-shared
+				   --disable-shared \
+				   --with-gnu-as \
+				   --with-gnu-ld \
+				   ${gcc_core_sysroot_arg}
 
 	# build
 	make all-gcc
 	make install-gcc
-
-	echo "Done"
-
-	cd $workdir
-
-	ln -s $gcc_core_prefix $gcc_core_prefix_link
-}
-
-
-# build glibc (headers only)
-build_glibc_headers()
-{
-	if [ -z ${KERNELDIR} ]; then
-		echo "Missing kernel directory (set KERNELDIR)!"
-		exit 1
-	fi
-
-	if [ -a $glibc_headers_build ]; then
-		echo "Deleting $glibc_headers_build ..."
-		rm -rf $glibc_headers_build
-	fi
-
-	echo "Creating build directory for glibc headers ..."
-	mkdir -p $glibc_headers_build
-
-	if [[ $? != 0 ]]; then
-		echo "Can't create build directory for glibc headers!"
-		exit 1
-	fi
-
-	cd ${glibc_headers_build}
-	CC="gcc -O2" $glibc_srcdir/configure --prefix= \
-					  --host=$glibc_host \
-					  --with-headers=${KERNELDIR}/usr/include \
-					  --disable-profile \
-					  --disable-debug \
-					  --without-gd  \
-					  --disable-sanity-checks \
-					  --without-__thread \
-					  --disable-shared
-
-	echo "Extract glibc headers ..."
-	make cross-compiling=yes install_root=$workdir/${glibc_name}-headers install-headers
-
-	echo "Done"
-
-	cd $workdir
-}
-
-# build glibc
-build_glibc()
-{
-	echo "Building glibc ($glibc_name) ..."
-	if [ -a $glibc_builddir ]; then
-		echo "Deleting $glibc_builddir ..."
-		rm -rf $glibc_builddir
-	fi
-
-	mkdir -p $glibc_builddir
-
-	if [[ $? != 0 ]]; then
-		echo "Can't create build directory!"
-		exit 1
-	fi
-
-	# rebuild `configure' from configure.in
-	echo "--- run autoconf in $glibc_srcdir/sysdeps/unix/sysv/nucleos"
-	cd $glibc_srcdir/sysdeps/unix/sysv/nucleos
-	autoconf
-	cd $glibc_builddir
-
-	BUILD_CC=gcc CFLAGS="$TARGET_CFLAGS $EXTRA_TARGET_CFLAGS" CC="${target}-gcc $GLIBC_EXTRA_CC_ARGS" \
-	AR=${target}-ar RANLIB=${target}-ranlib \
-	$glibc_srcdir/configure --prefix=/usr --build=$($glibc_srcdir/scripts/config.guess) --host=$target \
-				${GLIBC_EXTRA_CONFIG} ${DEFAULT_GLIBC_EXTRA_CONFIG} \
-				--with-headers=$header_dir \
-				--with-elf \
-				--without-cvs \
-				--disable-profile \
-				--disable-debug \
-				--without-gd \
-				--disable-shared \
-				--without-tls \
-				--without-__thread \
-				libc_cv_forced_unwind=yes libc_cv_c_cleanup=yes
-
-	make cross-compiling=yes LD=${target}-ld RANLIB=${target}-ranlib lib
-	make install_root=${sysroot} $glibc_sysroot_arg install
 
 	echo "Done"
 
@@ -330,14 +241,16 @@ build_newlib()
 	echo "Configure $newlib_name package ..."
 	cd $newlib_builddir
 
-	CC_FOR_TARGET=$gcc_core_prefix_link/bin/$gcc_core_target-gcc \
+	CC_FOR_TARGET=$prefix/bin/$gcc_core_target-gcc \
 	AS_FOR_TARGET=$prefix/bin/$binutils_target-as \
 	LD_FOR_TARGET=$prefix/bin/$binutils_target-ld \
 	AR_FOR_TARGET=$prefix/bin/$binutils_target-ar \
 	RANLIB_FOR_TARGET=$prefix/bin/$binutils_target-ranlib \
 	$newlib_srcdir/configure --build=$newlib_build \
 				 --target=$newlib_target \
-				 --prefix=$gcc_core_prefix_link \
+				 --prefix=$prefix \
+				 --with-gnu-as \
+				 --with-gnu-ld \
 				 --disable-shared
 
 	# build
@@ -377,7 +290,7 @@ build_gcc_full()
 	echo "Configure $gcc_name package ..."
 	cd $gcc_builddir
 
-	CC_FOR_TARGET=$gcc_core_prefix_link/bin/$gcc_core_target-gcc \
+	CC_FOR_TARGET=$prefix/bin/$gcc_core_target-gcc \
 	AS_FOR_TARGET=$prefix/bin/$binutils_target-as \
 	LD_FOR_TARGET=$prefix/bin/$binutils_target-ld \
 	AR_FOR_TARGET=$prefix/bin/$binutils_target-ar \
@@ -385,12 +298,17 @@ build_gcc_full()
 	$gcc_srcdir/configure --build=$gcc_build \
 			      --target=$gcc_target \
 			      --prefix=$prefix \
-			      $gcc_sysroot_arg \
 			      --enable-languages=c \
-			      --with-sysroot=$prefix/$gcc_target \
+			      --with-headers=$prefix/$target/include \
 			      --disable-shared \
 			      --disable-nls \
-			      --with-newlib
+			      --enable-symvers=gnu \
+			      --enable-c99 \
+			      --enable-long-long \
+			      --with-gnu-as \
+			      --with-gnu-ld \
+			      --with-newlib \
+			      $gcc_sysroot_arg
 
 	# build
 	echo "Building gcc ..."
@@ -454,22 +372,6 @@ do
 		gcc_builddir=$workdir/${gcc_name}-build
 		;;
 
-	l) # glibc
-		glibc_srcdir=`parse_string $OPTARG 1`
-
-		if [ -z  $glibc_srcdir ]; then
-			echo "Empty argument (missing glibc source)!"
-			exit 1
-		fi
-
-		glibc_srcdir=`abspath $glibc_srcdir`
-		glibc_name=`basename $glibc_srcdir`
-
-		# build dircetory path
-		glibc_headers_build=$workdir/${glibc_name}-headers-build
-		glibc_builddir=$workdir/${glibc_name}-build
-		;;
-
 	n) # newlib
 		newlib_srcdir=`parse_string $OPTARG 1`
 
@@ -513,56 +415,19 @@ do
 
 	esac
 done
-echo $gcc_core_prefix_link/bin
-PATH="$prefix/bin:$gcc_core_prefix_link/bin:${PATH}"
-export PATH
 
 echo "Creating installation directory ..."
 
 mkdir -p ${prefix}/${target}
-
-# spiffy new sysroot way.  libraries split between
-# prefix/target/sys-root/lib and prefix/target/sys-root/usr/lib
-sysroot=${prefix}/${target}/sys-root
-header_dir=${sysroot}/usr/include
-binutils_sysroot_arg="--with-sysroot=${sysroot}"
-gcc_sysroot_arg="--with-sysroot=${sysroot}"
-gcc_core_sysroot_arg=${gcc_sysroot_arg}
-glibc_sysroot_arg=""
-
-# glibc's prefix must be exactly /usr, else --with-sysroot'd
-# gcc will get confused when $sysroot/usr/include is not present
-# Note: --prefix=/usr is magic!  See http://www.gnu.org/software/libc/FAQ.html#s-2.2
-
-# Make lib directory in sysroot, else the ../lib64 hack used by 32 -> 64 bit
-# crosscompilers won't work, and build of final gcc will fail with
-#  "ld: cannot open crti.o: No such file or directory"
-mkdir -p $sysroot/lib
-mkdir -p $sysroot/usr/lib
-
-mkdir -p ${header_dir}
-
-# install system headers from kernel directory
-install_system_headers x${KERNELDIR} x${header_dir}
 
 ### Build binutils
 if [ -n "$binutils_builddir" ]; then
 	build_binutils
 fi
 
-## gcc 3.x may require this
-## FIXME: use gcc 4.x only
-# build_glibc_headers
-# exit 0
-
-### Build a core gcc (just enough to build glibc)
+### Build a core gcc
 if [ -n "$gcc_core_builddir" ]; then
 	build_gcc_core
-fi
-
-### Build a glibc
-if [ -n "$glibc_builddir" ]; then
-	build_glibc
 fi
 
 ### Build a newlib
@@ -570,13 +435,15 @@ if [ -n "$newlib_builddir" ]; then
 	build_newlib
 fi
 
-exit 0
+echo "Install system headers"
+header_dir=$prefix/$target/include
+install_system_headers x${KERNELDIR} x${header_dir}
 
 ### Build full cross compiler
 if [ -n "$gcc_builddir" ]; then
 	build_gcc_full
 fi
 
-echo "Done"
+echo "Cross-toolchain build complete"
 
 exit 0
