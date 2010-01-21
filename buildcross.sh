@@ -133,13 +133,17 @@ install_system_headers()
 
 	dst_headers_dir=`abspath $dst_headers_dir`
 
+	prevdir=`pwd`
+	cd $kernel_dir
+	# generate kernel headers
+	make headers_check
+	cd $prevdir
+
 	mkdir -p $dst_headers_dir
 
 	# FIXME: expects that headers were installed in kernel tree
 	#        i.e. `make ARCH=$arch headers_install' was executed
-	cp -r $kernel_dir/usr/include/asm $dst_headers_dir/
-	cp -r $kernel_dir/usr/include/asm-generic $dst_headers_dir/
-	cp -r $kernel_dir/usr/include/nucleos $dst_headers_dir/
+	cp -r $kernel_dir/usr/include/* $dst_headers_dir/
 }
 
 # build install binutils
