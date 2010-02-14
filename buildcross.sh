@@ -12,6 +12,20 @@
 #  the Free Software Foundation, version 2 of the License.
 ##############################################################################
 
+###
+# Build a cross toolchain.
+# Only the binutils-gcc-newlib configuration is supported for now.
+#
+# E.g.:
+# mkdir toolchain
+# cd toolchain
+# copy this script into toolchain
+# run:
+#   KERNELDIR=/path/to/nucleos/kernel ./buildcross.sh -b /path/to/binutils -c /path/to/gcc -n /path/to/newlib -g /path/to/gcc
+#
+# NOTE: The binutils, gcc and newlib must ported to nucleos.
+###
+
 cpu=i686
 manufacturer=pc
 kernel=nucleos
@@ -65,9 +79,9 @@ usage()
 	echo "[-b binutils package]: path to binutils directory"
 	echo "[-c core gcc package]: path to gcc core directory"
 	echo "[-g full gcc package]: path to gcc directory"
-	echo "[-l glibc]: path to glibc directory"
 	echo "[-n newlib package]: path to newlib directory"
 	echo "[-p core_cross:cross]: installation prefix for core cross and full cross toolset (current directory is default)"
+	echo "                       DON'T USE THIS INTENDED FOR FUTURE!"
 	echo "[-h]: this help"
 }
 
