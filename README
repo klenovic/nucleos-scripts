@@ -1,0 +1,8 @@
+		The build scripts
+		-----------------
+
+1.Scripts
+
+1.1 buildcross.sh
+	Build th GNU croos toolchain for Nucleos platform.
+	Use "./buildcross.sh -h" for possible options.
