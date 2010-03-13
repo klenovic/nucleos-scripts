@@ -26,6 +26,11 @@
 # NOTE: The binutils, gcc and newlib must ported to nucleos.
 ###
 
+if [[ `id -u` == 0 ]]; then
+	echo "Don't run this script with root privileges!"
+	exit 1
+fi
+
 cpu=i686
 manufacturer=pc
 kernel=nucleos
