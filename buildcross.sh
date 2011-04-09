@@ -155,7 +155,11 @@ install_system_headers()
 	prevdir=`pwd`
 	cd $kernel_dir
 	# generate kernel headers
-	make headers_check
+	if [[ "cpu" == "i686" ]]; then
+		ARCH=x86
+	fi
+
+	make ARCH=$ARCH headers_check
 	cd $prevdir
 
 	mkdir -p $dst_headers_dir
