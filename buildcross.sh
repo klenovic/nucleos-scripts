@@ -86,7 +86,7 @@ usage()
 	echo "[-g full gcc package]: path to gcc directory"
 	echo "[-n newlib package]: path to newlib directory"
 	echo "[-p core_cross:cross]: installation prefix for core cross and full cross toolset (current directory is default)"
-	echo "                       DON'T USE THIS INTENDED FOR FUTURE!"
+	echo "                       DON'T USE THIS, INTENDED FOR FUTURE!"
 	echo "[-h]: this help"
 }
 
@@ -155,7 +155,7 @@ install_system_headers()
 	prevdir=`pwd`
 	cd $kernel_dir
 	# generate kernel headers
-	if [[ "cpu" == "i686" ]]; then
+	if [[ "$cpu" == "i686" ]]; then
 		ARCH=x86
 	fi
 
