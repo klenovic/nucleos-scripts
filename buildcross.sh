@@ -36,7 +36,7 @@ manufacturer=pc
 kernel=nucleos
 os=newlib
 
-build=i686-pc-linux-gnu
+build=`/bin/arch`-pc-linux-gnu
 
 workdir=`pwd`
 prefix=$workdir/crosstool
@@ -192,6 +192,7 @@ build_binutils()
 				   --disable-nls \
 				   --with-gnu-as \
 				   --with-gnu-ld \
+				   --disable-werror \
 				   $binutils_sysroot_arg
 
 	# build
@@ -238,6 +239,7 @@ build_gcc_core()
 				   --disable-shared \
 				   --with-gnu-as \
 				   --with-gnu-ld \
+				   --disable-werror \
 				   ${gcc_core_sysroot_arg}
 
 	# build
@@ -278,7 +280,8 @@ build_newlib()
 				 --prefix=$prefix \
 				 --with-gnu-as \
 				 --with-gnu-ld \
-				 --disable-shared
+				 --disable-shared \
+				 --disable-werror
 
 	# build
 	echo "Building $newlib_name ..."
@@ -335,6 +338,7 @@ build_gcc_full()
 			      --with-gnu-as \
 			      --with-gnu-ld \
 			      --with-newlib \
+			      --disable-werror \
 			      $gcc_sysroot_arg
 
 	# build
